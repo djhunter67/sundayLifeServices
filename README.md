@@ -11,4 +11,4 @@ The backend will be written in `Rust`.  The `Actix-web` is the web server.  This
 The design and business logic of the site are to be provided by the proprietor of the site.
 
 
-![Hand sketched design](./static/imgs/design_sketch.png)
+![Hand sketched design](./static/imgs/first_iter_SLS_site.jpeg)
