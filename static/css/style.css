@@ -43,6 +43,7 @@ body {
 #template_pages #top__subject {
   font-weight: bold;
   text-align: center;
+  width: 50%;
 }
 #template_pages #top__subject__first_word {
   font-size: 2.5rem;
