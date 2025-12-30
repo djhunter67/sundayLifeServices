@@ -19,141 +19,133 @@ body {
 #template_pages {
   display: grid;
   grid-template-columns: 65px 1fr 1fr 1fr 65px;
-  grid-template-rows: 0.75fr 2fr 2fr 2fr;
+  grid-template-rows: 1fr 2fr 0.25fr;
   align-content: end;
   min-height: 100vh;
   background-color: hsl(0, 0%, 0%);
 }
-
-#landing {
-  grid-column: 2/5;
-  grid-row: span 4;
-  display: grid;
-  grid-template-rows: subgrid;
-  max-height: 100%;
-  contain: content;
-}
-#landing__nav {
+#template_pages #top {
+  grid-column: 1/-1;
   grid-row: 1/2;
+  background-color: coral;
   display: flex;
+  flex-direction: row;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
-  padding: 1rem 0;
+  padding: 10px 20px;
 }
-#landing__nav__left {
-  align-self: flex-start;
-  font-size: 2rem;
-  padding: 0 1rem;
+#template_pages #top__logo {
+  image-orientation: from-font;
 }
-#landing__nav__right {
-  padding: 0 1rem;
-  align-self: flex-end;
-  font-size: 2rem;
+#template_pages #top__logo img {
+  padding-top: 1rem;
 }
-#landing__splash {
-  grid-row: 2/3;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background-color: hsl(0, 0%, 100%);
-  border-radius: 2rem;
+#template_pages #top__subject {
+  font-weight: bold;
+  text-align: center;
 }
-#landing__splash__headshot {
-  height: 100%;
-  padding: 2rem;
-}
-#landing__splash__headshot figure {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-#landing__splash__headshot figure img {
-  border-radius: 2rem;
-}
-#landing__splash__name {
-  color: hsl(0, 0%, 0%);
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  align-items: center;
-  width: 50%;
-  height: 100%;
-  padding-right: 1rem;
-}
-#landing__splash__name h2 {
-  font-size: 8rem;
-}
-#landing__splash__name h3 {
-  font-size: 5rem;
-}
-#landing__about {
-  grid-row: 3/4;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 2rem;
-}
-#landing__about figure {
-  width: 50%;
-  height: 100%;
-  object-fit: contain;
-}
-#landing__about figure img {
-  border-radius: 2rem;
-}
-#landing__about__text {
-  line-height: 1.1;
-  font-size: 1.5rem;
-  width: 75%;
-  height: 100%;
-  padding: 2rem;
-}
-#landing__contact {
-  grid-row: 4/5;
-  display: grid;
-  grid-template-columns: 1fr 0.25fr 1fr;
-  grid-template-rows: 1fr;
-  contain: content;
-}
-#landing__contact__info {
-  grid-column: 1/2;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 1rem;
-}
-#landing__contact__info h2 {
+#template_pages #top__subject__first_word {
   font-size: 2.5rem;
+  color: white;
+  margin: 0;
 }
-#landing__contact__info p {
+#template_pages #top__subject__last_word {
   font-size: 1.5rem;
+  color: lightyellow;
+  margin: 0;
 }
-#landing__contact__info email {
-  font-size: 1.5rem;
+#template_pages #main {
+  grid-column: 1/-1;
+  grid-row: 2/3;
+  background-color: lightgray;
+  padding: 20px;
 }
-#landing__contact__image {
-  outline: 1px solid black;
-  grid-column: 3/4;
-  grid-row: span 2;
-  width: 100%;
-  height: 100%;
-  contain: content;
+#template_pages #main__paths {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  align-items: center;
+}
+#template_pages #main__paths button {
+  background-color: coral;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  margin: 10px;
+  font-size: 2.2rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+#template_pages #main__paths button:hover {
+  background-color: darkorange;
+}
+#template_pages #main__info_cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+#template_pages #main__info_cards .card {
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
 }
-#landing__contact__image a img {
-  border-radius: 2rem;
+#template_pages #main__info_cards .card__text {
+  flex: 0 0 30%;
+  padding: 15px;
+  font-size: 1.2rem;
+  color: #333;
 }
-#landing__contact__links {
-  grid-column: 2/3;
-  display: flex;
-  justify-content: space-evenly;
-  align-items: center;
+#template_pages #main__info_cards .card__image {
+  flex: 0 0 70%;
+}
+#template_pages #main__info_cards .card__image img {
   width: 100%;
-  height: 50%;
+  height: auto;
+  display: block;
+}
+#template_pages footer {
+  grid-column: 1/-1;
+  grid-row: 3/4;
+  background-color: coral;
+  color: white;
+  text-align: center;
+  padding: 10px 0;
+}
+#template_pages footer #footer_container {
+  display: grid;
+  grid-template-columns: 1fr 0.1fr;
+  grid-template-rows: 0.5fr 0.1fr;
+  font-size: 1rem;
+  background-color: coral;
+  padding: 10px 0;
+}
+#template_pages footer #footer_container button {
+  grid-row: 1/2;
+  background-color: white;
+  color: coral;
+  border: none;
+  border-radius: 5px;
+  padding: 8px 16px;
+  margin: 3rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+#template_pages footer #footer_container button:hover {
+  background-color: lightgray;
+}
+#template_pages footer #footer_container__version {
+  grid-row: 2/3;
+  grid-column: 2/3;
+  margin-top: 5px;
+  font-size: 0.9rem;
+  color: lightyellow;
 }
 
 /*# sourceMappingURL=style.css.map */

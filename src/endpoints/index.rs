@@ -28,11 +28,11 @@ pub async fn index() -> HttpResponse {
 
     let var_name = IndexTemplate {
         title: "Home",
-        content: vec!["friendly", "messages"],
+        content: ["friendly", "messages"].to_vec(),
         version,
-        linkedin: "https://www.linkedin.com/in/christerpher",
-        github: "https://github.com/djhunter67",
-        source_url: "https://christerpher.com",
+        // linkedin: "https://www.linkedin.com/in/christerpher",
+        // github: "https://github.com/djhunter67",
+        // source_url: "https://christerpher.com",
     };
 
     let rendered = var_name.render().expect("Failed to render template");

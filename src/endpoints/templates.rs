@@ -11,9 +11,9 @@ pub struct IndexTemplate<'a> {
     pub title: &'a str,
     pub content: Vec<&'a str>,
     pub version: &'a str,
-    pub github: &'a str,
-    pub linkedin: &'a str,
-    pub source_url: &'a str,
+    // pub github: &'a str,
+    // pub linkedin: &'a str,
+    // pub source_url: &'a str,
 }
 
 #[derive(Template)]
