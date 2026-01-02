@@ -44,16 +44,23 @@ body {
   font-weight: bold;
   text-align: center;
   width: 50%;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
 }
 #template_pages #top__subject__first_word {
-  font-size: 2.5rem;
+  font-size: 6.5rem;
   color: white;
   margin: 0;
+  grid-column: 1/2;
+  grid-row: 1/2;
 }
 #template_pages #top__subject__last_word {
-  font-size: 1.5rem;
+  font-size: 4.5rem;
   color: lightyellow;
   margin: 0;
+  grid-column: 2/3;
+  grid-row: 2/3;
 }
 #template_pages #main {
   grid-column: 1/-1;
