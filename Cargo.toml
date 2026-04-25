@@ -53,7 +53,6 @@ actix-files = "0.6.6"
 actix-web = "4.9.0"
 askama = "0.12.1"
 config = { version = "0.15.7", features = ["yaml"] }
-dotenv = "0.15.0"
 r2d2 = "0.8.10"
 r2d2_postgres = "0.18.2"
 r2d2_redis = "0.14.0"
@@ -64,6 +63,7 @@ tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter", "json"] }
 mongodb = "3.2.0"
 futures = "0.3.31"
+dotenvy = "0.15.7"
 
 [dev-dependencies]
 rstest = "0.24.0"
