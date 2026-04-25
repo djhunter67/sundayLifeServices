@@ -1,8 +1,11 @@
 //! Initialize and return a connection to the ``MongoDb`` database.
 
+use super::r2d2_mongodb::client_manager::MongoClientManager;
 use crate::settings;
 use actix_web::web::Data;
-use mongodb::{Client, Collection, bson::Document};
+use mongodb::{bson::Document, Collection};
+use r2d2::ManageConnection;
+use std::sync::Arc;
 use tracing::{info, instrument};
 
 #[must_use]
@@ -20,59 +23,78 @@ use tracing::{info, instrument};
 ///  - If the connection pool could not be created
 pub async fn establish_connection(
     settings: &settings::Mongo,
-    manager: Data<Client>,
+    manager: Data<MongoClientManager>,
 ) -> Collection<Document> {
     info!("Get mongo connection pool");
-    manager
-        .into_inner()
-        .database(&settings.db)
-        .collection(&settings.collection)
+    Arc::into_inner(
+        manager
+            .into_inner()
+            .connect()
+            .expect("No Mongodb Manager found")
+            .database(&settings.db)
+            .collection(&settings.collection)
+            .into(),
+    )
+    .expect("Failed to create pool")
 }
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
+    use std::time::Duration;
 
     use mongodb::{
+        bson::{doc, Bson, Document},
+        options::{ClientOptions, ServerAddress},
         Collection,
-        bson::{Bson, Document, doc},
     };
     use r2d2::ManageConnection;
     use rstest::rstest;
 
-    use crate::{
-        models::r2d2_mongodb::client_manager::MongoClientManager,
-        settings::{self, Settings},
-    };
+    use crate::settings::{self, Settings};
 
     use super::*;
 
     #[rstest]
     #[tokio::test]
-    async fn test_connects_from_uri() {
+    async fn test_can_establish_connection() {
         let settings: Settings = settings::get().unwrap();
 
-        match MongoClientManager::from_uri(&settings.mongo.uri)
-            .await
-            .unwrap()
-            .connect()
-        {
-            Ok(_) => (),
-            Err(err) => panic!("URI connection failure: {err:#?}"),
-        }
+        let manager = MongoClientManager::new(
+            ClientOptions::builder()
+                .app_name(settings.mongo.db.clone())
+                .hosts(vec![ServerAddress::Tcp {
+                    host: settings.mongo.host.clone(),
+                    port: Some(settings.mongo.port),
+                }])
+                .max_pool_size(Some(settings.mongo.pool_size.into()))
+                .connect_timeout(Duration::from_secs(
+                    settings.mongo.connection_timeout.into(),
+                ))
+                .build(),
+        );
+
+        let pool = establish_connection(&settings::get().unwrap().mongo, Data::new(manager)).await;
+
+        // Assert that a connection has been established
+        assert!(pool.estimated_document_count().await.is_ok());
     }
 
     #[rstest]
-    #[ignore = "If this fails every other mongo test fails"]
     #[tokio::test]
-    #[should_panic(expected = "The Database should be up")]
     async fn test_fail_to_connect() {
-        let settings: Settings = settings::get().unwrap();
-        let manager = MongoClientManager::from_uri(&settings.mongo.uri)
-            .await
-            .unwrap()
-            .connect()
-            .unwrap();
+        let manager = MongoClientManager::new(
+            ClientOptions::builder()
+                .app_name(Some(String::from("testing")))
+                .hosts(vec![ServerAddress::Tcp {
+                    host: "localhost".to_string(),
+                    port: Some(27017),
+                }])
+                .max_pool_size(Some(10))
+                .connect_timeout(Duration::from_secs(1))
+                .server_selection_timeout(Duration::from_secs(1))
+                .build(),
+        );
 
         let pool = establish_connection(&settings::get().unwrap().mongo, Data::new(manager)).await;
 
@@ -176,13 +198,11 @@ mod tests {
 
         assert!(result.modified_count.eq(&1));
 
-        assert!(
-            changed_result
-                .unwrap()
-                .get_str("name")
-                .unwrap()
-                .eq("John OtherDoe")
-        );
+        assert!(changed_result
+            .unwrap()
+            .get_str("name")
+            .unwrap()
+            .eq("John OtherDoe"));
     }
 
     #[rstest]

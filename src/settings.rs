@@ -37,11 +37,11 @@ pub struct Redis {
 /// Mongo setting for the entire application
 #[derive(Deserialize, Clone, Debug)]
 pub struct Mongo {
-    // pub username: String,
-    // pub password: String,
+    pub username: String,
+    pub password: String,
     pub uri: String,
-    // pub host: String,
-    // pub port: u16,
+    pub host: String,
+    pub port: u16,
     pub db: String,
     pub collection: String,
     pub require_auth: bool,

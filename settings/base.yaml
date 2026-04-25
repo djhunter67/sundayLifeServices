@@ -2,16 +2,20 @@ application:
   port: 8000
 
 mongo:
- uri: "mongodb+srv://djhunter67:UJIX8xvSiHGl1tFQ@devcluster.jbdh4mk.mongodb.net/?appName=devCluster"
- db: "sundayLife"
- collection: "test"
- require_auth: true
+ username: ""
+ password: ""
+ uri: "mongodb://10.20.30.20:27017"
+ host: "10.20.30.20"
+ port: 27017
+ db: "template_db"
+ collection: "template"
+ require_auth: false
  pool_size: 1
  connection_timeout: 1
  
 
 redis:
-  url: "redis://127.0.0.1:6379"
+  url: "redis://10.20.30.5:6379"
   pool_size: 1
   pool_max_open: 16
   pool_max_idle: 8
@@ -28,7 +32,7 @@ postgres:
   username: "djhunter67"
   password: "PNF27156"
   port: 5432
-  host: "127.0.0.1"
+  host: "10.20.30.23"
   db: "test"
   require_auth: true
   schema: "static/schema.sql"
