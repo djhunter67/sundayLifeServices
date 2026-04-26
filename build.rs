@@ -1,5 +1,8 @@
 use std::{env, fs};
 
+/// This will change the file multiple times per build.
+/// This build.rs file will work in tandem with the commit
+/// and push hooks to change the secret being injected here.
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Load the .env file to build the scripts environment
     dotenvy::dotenv().expect("Failed to load the .env file");

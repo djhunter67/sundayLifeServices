@@ -52,7 +52,6 @@ async fn run(
             .service(templates::sse)
             .service(templates::action_script)
             .service(templates::prof_headshot)
-            .service(templates::usmc_patrolling)
             .service(templates::hackathon)
             .service(templates::github)
             .service(templates::linkedin)
@@ -96,6 +95,7 @@ impl Application {
     )]
     pub async fn build(settings: &mut crate::settings::Settings) -> Result<Self, std::io::Error> {
         info!("Buidling the main application");
+        // Sqlite connection
         // let connection_pool = if let Some(pool) = test_pool {
         //     pool
         // } else {
@@ -111,13 +111,13 @@ impl Application {
         //     }
         // };
 
-        let address = format!(
+        let app_address = format!(
             "{}:{}",
             settings.application.host, settings.application.port
         );
 
-        debug!("Binding the TCP port: {address}");
-        let listener: net::TcpListener = net::TcpListener::bind(&address)?;
+        debug!("Binding the TCP port: {app_address}");
+        let listener: net::TcpListener = net::TcpListener::bind(&app_address)?;
         let port = listener.local_addr()?.port();
         let server = run(listener, settings.clone()).await?;
 
