@@ -12,3 +12,19 @@ The design and business logic of the site are to be provided by the proprietor o
 
 
 ![Hand sketched design](./static/imgs/first_iter_SLS_site.jpeg)
+
+
+## TODO
+[] Design the four other html pages
+[] implement the four other html pages
+[] insert a user login (will be required for online payment later)
+[] implement user authorization 
+[] implement user athentication
+[] Mongodb to save user information
+[] Hash and salt user information (likely passwords only)
+[] Write tests to ensure functionality of payments
+[] Setup Github Actions to function on push
+[] Write tests to ensure functionality of user auth
+[] Implement the mobile view of the web application
+[] Setup Redis as a middle layer for near realtime retrieval
+[] Launch the site to Fly.io on the free layer
