@@ -44,13 +44,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Write to the base.yaml file
     fs::write(&dest_path, new_content)?;
-    // let mut f = File::create(&dest_path).expect("unable to open the file");
-
-    // append the secret to the end of the yaml_content
-    // let () = prev_contents.append(&mut yaml_content.into_boxed_str().as_bytes().to_vec());
-
-    // f.write_all(&new_content.into_bytes())
-    // .expect("Unable to write joined content to file");
 
     // Rerun the build if the .env file changes
     println!("cargo:rerun-if-changed={dest_path}");
