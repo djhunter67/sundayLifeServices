@@ -6,7 +6,7 @@ use website_template::{settings, startup::Application, telemetry};
 async fn main() -> io::Result<()> {
     // This is a macro that allows for multiple loggers to be used at once
 
-    dotenv::dotenv().ok();
+    dotenvy::dotenv().ok();
 
     let mut settings = match settings::get() {
         Ok(settings) => settings,
