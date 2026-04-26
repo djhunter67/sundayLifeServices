@@ -1,4 +1,4 @@
-use crate::endpoints::{health, index, templates};
+use crate::endpoints::{self, health, index, templates};
 use crate::models::r2d2_mongodb::client_manager::MongoClientManager;
 use crate::settings::Settings;
 use actix_web::web::{self, Data};
@@ -57,6 +57,10 @@ async fn run(
             .service(templates::linkedin)
             .service(index::index)
             .service(health::health_check)
+            .service(endpoints::bs_logic::about)
+            .service(endpoints::bs_logic::schedule)
+            .service(endpoints::bs_logic::testimonials)
+            .service(endpoints::bs_logic::cost)
             .route("/sse", web::get().to(index::sse))
     })
     .keep_alive(KeepAlive::Os) // Keep the connection alive; OS handled

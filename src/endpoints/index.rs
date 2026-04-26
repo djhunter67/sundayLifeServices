@@ -1,19 +1,17 @@
 use std::task::Poll;
 
+use super::templates::IndexTemplate;
 use actix_web::{
-    get,
+    Error, HttpRequest, HttpResponse, Responder, get,
     http::{
-        self,
+        self, StatusCode,
         header::{ContentEncoding, ContentType},
-        StatusCode,
     },
-    web, Error, HttpRequest, HttpResponse, Responder,
+    web,
 };
 use askama::Template;
 use futures::stream;
 use tracing::{info, instrument};
-
-use super::templates::IndexTemplate;
 
 #[instrument(
     name = "Serving main page",
@@ -30,20 +28,16 @@ pub async fn index() -> HttpResponse {
         title: "Home",
         content: ["friendly", "messages"].to_vec(),
         version,
-        // linkedin: "https://www.linkedin.com/in/christerpher",
-        // github: "https://github.com/djhunter67",
-        // source_url: "https://christerpher.com",
     };
 
     let rendered = var_name.render().expect("Failed to render template");
-
-    // qs.await;
 
     HttpResponse::Ok()
         .content_type(ContentType::html())
         .body(rendered)
 }
 
+#[allow(clippy::future_not_send)]
 pub async fn sse(_req: HttpRequest) -> impl Responder {
     let mut counter: usize = 5;
 
@@ -69,10 +63,10 @@ mod tests {
     use std::pin::pin;
 
     use actix_web::{
+        App,
         body::{self, MessageBody},
         test,
         web::{self, Bytes},
-        App,
     };
     use futures::future;
 
