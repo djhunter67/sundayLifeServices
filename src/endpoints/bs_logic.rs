@@ -23,8 +23,8 @@ struct TestimonialTemplate<'a> {
 }
 
 #[derive(Template)]
-#[template(path = "costs.html")]
-struct CostsTemplate<'a> {
+#[template(path = "finances.html")]
+struct FinancesTemplate<'a> {
     title: &'a str,
     content: Vec<&'a str>,
 }
@@ -86,14 +86,14 @@ pub async fn testimonials() -> HttpResponse {
         .body(template)
 }
 
-#[get("/cost")]
-pub async fn cost() -> HttpResponse {
-    let cost_benefit: &str = "The company started is great!";
+#[get("/finances")]
+pub async fn finances() -> HttpResponse {
+    let finances_benefit: &str = "The company started is great!";
     let financial_aid: &str = "Five Stars";
     let customer_value: &str = "A DateTime object";
-    let template = CostsTemplate {
+    let template = FinancesTemplate {
         title: "Costs",
-        content: [cost_benefit, financial_aid, customer_value].to_vec(),
+        content: [finances_benefit, financial_aid, customer_value].to_vec(),
     };
 
     let template = template.render().expect("About page render error");
