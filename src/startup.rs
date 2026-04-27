@@ -61,6 +61,7 @@ async fn run(
             .service(endpoints::bs_logic::schedule)
             .service(endpoints::bs_logic::testimonials)
             .service(endpoints::bs_logic::cost)
+            .service(endpoints::bs_logic::contact)
             .route("/sse", web::get().to(index::sse))
     })
     .keep_alive(KeepAlive::Os) // Keep the connection alive; OS handled

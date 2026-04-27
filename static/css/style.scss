@@ -1,3 +1,4 @@
+@use "sass:meta";
 *,
 *::before,
 *::after {
@@ -33,7 +34,7 @@ $light-yellow: hsl(60, 100%, 90%);
     align-content: end;
     min-height: 100vh;
     background-color: $black;
-    @import "_index";
+    @include meta.load-css("_index");
 }
 
 

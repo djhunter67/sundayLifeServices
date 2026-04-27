@@ -6,11 +6,8 @@
   </section>
   <section id="top__subject">
     <div id="top__subject__first_word">
-      <h1>HOME</h1>
-    </div>
-    <div id="top__subject__last_word">
-      <h2>BIRTHS</h2>
-    </div>
+      <h1>HOME</h1><h3>BIRTHS</h3>
+    </div>    
   </section>
 </header>
 
@@ -68,39 +65,37 @@
   <section id="footer_container">
     <button
       hx-get="/contact"
-      hx-target="#template_pages"
+      hx-target="#main"
       hx-swap="outerHTML"
+      hx-push-url="true"
       hx-trigger="click">
       CONTACT
     </button>
     <button
       hx-get="https://facebook.com"
       hx-push-url="true"
-      hx-target="#template_pages"
-      hx-swap="outerHTML"
+      hx-target="_blank"
       hx-trigger="click">
       FACEBOOK
     </button>
     <button
-      hx-get="https://twitter.com"
+      hx-get="https://x.com"
       hx-push-url="true"
-      hx-target="#template_pages"
-      hx-swap="outerHTML"
+      hx-target="_top"
       hx-trigger="click">
       TWITTER
     </button>
     <button
       hx-get="https://instagram.com"
       hx-push-url="true"
-      hx-target="#template_pages"
-      hx-swap="outerHTML"
+      hx-target="_top"
       hx-trigger="click">
       INSTAGRAM
     </button>
     <button
       hx-get="/about"
       hx-push-url="true"
-      hx-target="#template_pages"
+      hx-target="#main"
       hx-swap="outerHTML"
       hx-trigger="click">
       ABOUT

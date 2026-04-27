@@ -29,6 +29,13 @@ struct CostsTemplate<'a> {
     content: Vec<&'a str>,
 }
 
+#[derive(Template)]
+#[template(path = "contact.html")]
+struct ContactTemplate<'a> {
+    title: &'a str,
+    content: Vec<&'a str>,
+}
+
 #[get("/about")]
 pub async fn about() -> HttpResponse {
     let company_origins: &str = "The company started in Golden Valley, Arizona in 2006";
@@ -87,6 +94,23 @@ pub async fn cost() -> HttpResponse {
     let template = CostsTemplate {
         title: "Costs",
         content: [cost_benefit, financial_aid, customer_value].to_vec(),
+    };
+
+    let template = template.render().expect("About page render error");
+
+    HttpResponse::Ok()
+        .content_type(ContentType::html())
+        .body(template)
+}
+
+#[get("/contact")]
+pub async fn contact() -> HttpResponse {
+    let business_contact: &str = "(623) 800-2580";
+    let personal_contact: &str = "(623) 555-2560";
+    let business_email: &str = "nahan@sundaylifeservices.com";
+    let template = ContactTemplate {
+        title: "Contact",
+        content: [business_contact, personal_contact, business_email].to_vec(),
     };
 
     let template = template.render().expect("About page render error");
