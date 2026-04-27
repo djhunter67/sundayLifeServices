@@ -25,6 +25,6 @@ The design and business logic of the site are to be provided by the proprietor o
 - [ ] Write tests to ensure functionality of payments
 - [ ] Setup Github Actions to function on push
 - [ ] Write tests to ensure functionality of user auth
-- [ ] Implement the mobile view of the web application
+- [X] Implement the mobile view of the web application
 - [ ] Setup Redis as a middle layer for near realtime retrieval
 - [ ] Launch the site to Fly.io on the free layer
