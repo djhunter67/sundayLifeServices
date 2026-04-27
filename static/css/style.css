@@ -125,6 +125,8 @@ body {
 #template_pages footer #footer_container {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
   font-size: 1rem;
   background-color: coral;
   padding: 10px 0;
