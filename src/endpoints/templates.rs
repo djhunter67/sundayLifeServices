@@ -207,16 +207,16 @@ async fn usmc_patrolling() -> Result<NamedFile, actix_web::Error> {
     }
 }
 
-#[get("/hackathon")]
+#[get("/spinner")]
 #[instrument(
-    name = "Serving hackathon.jpg",
+    name = "Serving spinner.jpg",
     level = "info",
     target = "portfolio_site"
 )]
-async fn hackathon() -> Result<NamedFile, actix_web::Error> {
-    info!("Serving hackathon.jpg");
+async fn spinner() -> Result<NamedFile, actix_web::Error> {
+    info!("Serving spinner.jpg");
 
-    let filename = "hackathon_win.jpg";
+    let filename = "spinner.gif";
     let path: PathBuf = ["static", "imgs", filename].iter().collect();
 
     match NamedFile::open(path) {

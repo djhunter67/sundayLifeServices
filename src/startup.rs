@@ -52,7 +52,7 @@ async fn run(
             .service(templates::sse)
             .service(templates::action_script)
             .service(templates::prof_headshot)
-            .service(templates::hackathon)
+            .service(templates::spinner)
             .service(templates::github)
             .service(templates::linkedin)
             .service(index::index)
