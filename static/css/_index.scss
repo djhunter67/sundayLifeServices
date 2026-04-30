@@ -1,80 +1,17 @@
-#top {
-    grid-column: 1 / -1;
-    grid-row: 1 / 2;
-    background-color: purple;
-    display: grid;
-    // flex-direction: row;
-    // flex-wrap: wrap;
-    // align-items: center;
-    // justify-content: space-between;
-    grid-template-columns: repeat(auto-fit, minmax(15.625rem, 1fr));
-    grid-template-rows: 1fr 2fr;
-    padding: 10px 20px;
-    gap: 2rem;
-    max-width: 100vw;
-    margin: 0 auto;
+// @media (max-width: 844px) {
+//     #main #main__paths {
+// 	flex-direction: column;
+//     }
+//     #main #main__info_cards {
+// 	display: flex;
+// 	flex-direction: column;
+//     }
 
-    &__nav {
-	grid-row: 1 / 2;
-	grid-column: 1 / -1;
-	
-	&__login {
-	    background-color: white;
-	    color: coral;
-	    border: none;
-	    border-radius: 5px;
-	    padding: 8px 16px;
-	    margin: 0;
-	    font-size: 1rem;
-	    cursor: pointer;
-	    transition: background-color 0.3s ease;
-
-	    &:hover {
-		background-color: lightgray;
-	    }
-	}
-    }
-    
-    &__logo {
-	grid-row: 2;
-	grid-column: 1 / 2;
-	image-orientation: from-font;
-	
-	img {
-	    padding-top: 1rem;
-	    padding-right: 1rem;
-	}
-    }
-    &__subject {
-	grid-column: 2 / 4;
-	// contains an H1 header and an H2 subheader
-	font-weight: bold;
-	text-align: center;
-	
-	&__first_word {
-	    
-	    // first word and is the H1 header
-	    font-size: 4.5rem;
-	    color: white;
-	    margin: 0;
-	    display: flex;
-	    flex-wrap: wrap;
-
-	    h3 {
-		text-indent: 7rem;
-	    }
-	}
-
-	// &__last_word {
-	//     // last word and is the H2 subheader
-	//     font-size: 3.5rem;
-	//     color: white;
-	//     margin: 0;
-	//     grid-column: 1 / 2;
-	//     grid-row: 2 / 3;
-	// }
-    }
-}
+//     footer #footer_container {
+// 	display: flex;
+// 	flex-direction: column;
+//     }
+// }
 
 #main {
     grid-column: 1 / -1;
@@ -82,6 +19,7 @@
     background-color: lightgray;
     padding: 20px;
 
+    
     &__paths {
 	display: flex;
 	flex-direction: row;
@@ -109,31 +47,39 @@
     &__info_cards {
 	// contains multiple info cards displayed in a grid layout with text in the top and an image at the bottom split 30/70
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
 	gap: 20px;
 	margin-top: 20px;
+	width: 100%;
+	box-sizing: border-box;
 	
 	.card {
 	    background-color: white;
 	    border-radius: 10px;
 	    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-	    overflow: hidden;
+	    overflow-x: hidden;
 	    display: flex;
 	    flex-direction: column;
+	    // align-items: center;  // makes images smaller in regular screen size
 
 	    &__text {
-		flex: 0 0 30%;
-		padding: 15px;
-		font-size: 1.2rem;
-		color: #333;
+		// flex: 0 0 70%;
+		p {
+		    padding: 1rem;
+		    font-size: 1.2rem;
+		    color: #333;
+		    flex-grow: 1;
+		}
 	    }
 
 	    &__image {
-		flex: 0 0 70%;
+		// flex: 0 0 70%;
+		overflow-x: hidden;
 		img {
 		    width: 100%;
 		    height: auto;
 		    display: block;
+		    object-fit: cover;
 		}
 	    }
 	}

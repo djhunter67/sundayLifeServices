@@ -1,4 +1,4 @@
-use crate::endpoints::{self, health, index, templates};
+use crate::endpoints::{self, health, index, login, register, templates};
 use crate::models::r2d2_mongodb::client_manager::MongoClientManager;
 use crate::settings::Settings;
 use actix_web::web::{self, Data};
@@ -43,18 +43,21 @@ async fn run(
             .app_data(db_redis.clone())
             .app_data(db_sqlite.clone())
             .app_data(db_mongo.clone())
-            .service(templates::favicon)
-            .service(templates::logomain)
-            .service(templates::stylesheet)
-            .service(templates::source_map)
-            .service(templates::htmx)
-            .service(templates::response_targets)
-            .service(templates::sse)
-            .service(templates::action_script)
-            .service(templates::prof_headshot)
-            .service(templates::spinner)
-            .service(templates::github)
-            .service(templates::linkedin)
+            .service(
+                web::scope("/static")
+                    .service(templates::favicon)
+                    .service(templates::logomain)
+                    .service(templates::stylesheet)
+                    .service(templates::source_map)
+                    .service(templates::htmx)
+                    .service(templates::response_targets)
+                    .service(templates::sse)
+                    .service(templates::action_script)
+                    .service(templates::prof_headshot)
+                    .service(templates::spinner)
+                    .service(templates::github)
+                    .service(templates::linkedin),
+            )
             .service(index::index)
             .service(health::health_check)
             .service(endpoints::bs_logic::about)
@@ -62,6 +65,11 @@ async fn run(
             .service(endpoints::bs_logic::testimonials)
             .service(endpoints::bs_logic::finances)
             .service(endpoints::bs_logic::contact)
+            .service(
+                web::scope("/v1")
+                    .service(login::login)
+                    .service(register::register),
+            )
             .route("/sse", web::get().to(index::sse))
     })
     .keep_alive(KeepAlive::Os) // Keep the connection alive; OS handled

@@ -1,8 +1,7 @@
-use std::path::PathBuf;
-
 use actix_files::NamedFile;
 use actix_web::{HttpResponse, Responder, get};
 use askama::Template;
+use std::path::PathBuf;
 use tracing::{error, info, instrument};
 
 #[derive(Template)]
