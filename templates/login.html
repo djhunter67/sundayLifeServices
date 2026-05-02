@@ -3,12 +3,12 @@
 <section id="login">
   <h1>LOGIN</h1>
   <div id="login__center">
-    <form hx-post="/login" hx-target="#login__center__response" hx-swap="outerHTML">
+    <form id="user_login" hx-post="/v1/login_user" hx-target="#login__response" hx-swap="innerHTML">
       <label for="email_input">EMAIL:</label>
-      <input type="text" id="login__center__email" name="email_input" autocomplete="on"/>
+      <input type="text" id="login__center__username" name="email_input" autocomplete="on" placeholder="EMAIL" value="theuser@user.com"/>
 
       <label for="password_input">PASSWORD:</label>
-      <input type="password" id="login__center__password" name="password_input" autocomplete="on"/>
+      <input type="password" id="login__center__auth" name="password_input" autocomplete="on" placeholder="PASSWORD" value="thepassword"/>
       <button type="submit">SUBMIT</button>
     </form>
   </div>

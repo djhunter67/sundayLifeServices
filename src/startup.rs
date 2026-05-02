@@ -68,6 +68,7 @@ async fn run(
             .service(
                 web::scope("/v1")
                     .service(login::login)
+                    .service(login::login_user)
                     .service(register::register),
             )
             .route("/sse", web::get().to(index::sse))

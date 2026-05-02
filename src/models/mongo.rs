@@ -9,7 +9,7 @@ use tracing::{info, instrument};
 #[instrument(
     name = "Get Connection Pool for MongoDb",
     level = "info",
-    target = "demo_web_app",
+    target = "sundayLifeServices web app",
     skip(settings, manager)
 )]
 /// # Result
