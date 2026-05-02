@@ -3,6 +3,7 @@
 *::before,
 *::after {
     box-sizing: border-box;
+    // outline: 1px solid red;  // Debugging overflow issues
 }
 
 * {
@@ -11,8 +12,8 @@
 
 body {
     font-family: 'Times New Roman', Times, serif;
-    width: 100dvw;
-    height: 100dvh;
+    width: 100%;
+    height: fit-content;
     background-color: hsl(0, 0%, 0%);
     color: white;    
 }
@@ -31,7 +32,6 @@ $light-yellow: hsl(60, 100%, 90%);
     display: grid;
     grid-template-columns: 65px 1fr 1fr 1fr 65px;
     grid-template-rows: auto auto 0.25fr;
-    align-content: end;
     // max-height: 100vh;
     background-color: $black;
     justify-content: center;
@@ -48,8 +48,8 @@ $light-yellow: hsl(60, 100%, 90%);
 	// justify-content: space-between;
 	// grid-template-columns: repeat(auto-fit, minmax(15.625rem, 1fr));
 	// grid-template-rows: 1fr 2fr;
-	padding: 1rem;
-	min-width: 100vw;
+	padding: 1rem 1rem 0 1rem;
+	min-width: 100%;
 	margin: 0 auto;
 
 	&__nav {
