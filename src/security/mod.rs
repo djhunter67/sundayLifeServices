@@ -1,3 +1,4 @@
+use base64::{Engine as _, engine::general_purpose};
 /// This module holds the encryption, salt, and peppering of passwords
 use chacha20::{
     ChaCha20,
@@ -89,7 +90,7 @@ impl PassWorder {
     pub fn pepper(mut self) -> Self {
         // self.pw += "the_pepper";
 
-        let base_64_pepper = base64::encode(PEPPER);
+        let base_64_pepper = general_purpose::STANDARD.encode(PEPPER);
 
         self.pw += &String::from_utf8_lossy(base_64_pepper.as_bytes());
         info!("The Peppered PW: {}", self.pw);
@@ -105,9 +106,9 @@ impl PassWorder {
     pub fn deconstruct(&self) -> (String, String, String) {
         let (salt, hash) = self.pw.split_once('$').expect("No split delimeter found");
 
-        match base64::decode(
+        match general_purpose::STANDARD.decode(
             self.pw
-                .split_at(self.pw.len() - base64::encode(PEPPER).len())
+                .split_at(self.pw.len() - general_purpose::STANDARD.encode(PEPPER).len())
                 .1,
         ) {
             Ok(pepper) => (
@@ -151,7 +152,11 @@ mod tests {
     fn test_password_peppering() {
         let pw = PassWorder::new("my_secret_password".to_string());
         let peppered_pw = pw.pepper();
-        assert!(peppered_pw.get().ends_with(base64::encode(PEPPER).as_str()));
+        assert!(
+            peppered_pw
+                .get()
+                .ends_with(general_purpose::STANDARD.encode(PEPPER).as_str())
+        );
     }
 
     #[test]
