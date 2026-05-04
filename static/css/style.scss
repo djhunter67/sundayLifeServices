@@ -55,6 +55,22 @@ $light-yellow: hsl(60, 100%, 90%);
 	&__nav {
 	    grid-row: 1 / 2;
 	    grid-column: 1 / -1;
+
+	    &__home {
+		background-color: white;
+		color: coral;
+		border: none;
+		border-radius: 5px;
+		padding: 8px 16px;
+		margin: 0;
+		font-size: 1rem;
+		cursor: pointer;
+		transition: background-color 0.3s ease;
+
+		&:hover {
+		    background-color: lightgray;
+		}
+	    }
 	    
 	    &__login {
 		background-color: white;
@@ -126,7 +142,8 @@ $light-yellow: hsl(60, 100%, 90%);
     }
 
     @include meta.load-css("_index");
-    @include meta.load-css("_login")
+    @include meta.load-css("_login");
+    @include meta.load-css("_registration");
 }
 
 @media (max-width: 844px) {

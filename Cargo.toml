@@ -64,6 +64,9 @@ tracing-subscriber = { version = "0.3.19", features = ["env-filter", "json"] }
 mongodb = "3.2.0"
 futures = "0.3.31"
 dotenvy = "0.15.7"
+chacha20 = "0.10.0"
+hex = "0.4.3"
+rand = "0.10.1"
 
 [dev-dependencies]
 rstest = "0.24.0"

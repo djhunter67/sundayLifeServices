@@ -1,4 +1,4 @@
-use mongodb::{error::Error, options::ClientOptions, Client};
+use mongodb::{Client, error::Error, options::ClientOptions};
 use r2d2::ManageConnection;
 
 /// Struct for managing a pool of `MongoDB` connections

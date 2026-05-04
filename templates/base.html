@@ -19,6 +19,15 @@
       <header id="template_pages__top">
 	<nav id="template_pages__top__nav">
 	  <button
+	    id="template_pages__top__nav__home"
+	    hx-get="/"
+	    hx-target="#template_pages"
+	    hx-swap="outerHTML"
+	    hx-push-url="true"
+	    hx-trigger="click"
+	    >HOME
+	  </button>
+	  <button
 	    id="template_pages__top__nav__login"
 	    hx-get="/v1/login"
 	    hx-target="#template_pages"
@@ -31,7 +40,7 @@
 	  <button
 	    id="template_pages__top__nav__signup"
 	    hx-get="/v1/register"
-	    hx-target="#template pages"
+	    hx-target="#template_pages"
 	    hx-swap="outerHTML"
 	    hx-push-url="true"
 	    hx-trigger="click"
@@ -50,8 +59,6 @@
       </header>
       {% block individual_page_contents %}
       {% endblock %}
-    </div>
-    <div id="error_block">
       {% block error_contents %}
       {% endblock %}
     </div>

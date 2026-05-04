@@ -1,8 +1,9 @@
 use crate::endpoints::{self, health, index, login, register, templates};
 use crate::models::r2d2_mongodb::client_manager::MongoClientManager;
-use crate::settings::Settings;
+use crate::settings::{self, Settings};
 use actix_web::web::{self, Data};
 use actix_web::{App, HttpServer, http::KeepAlive, middleware};
+use r2d2::ManageConnection;
 use r2d2_redis::RedisConnectionManager;
 use r2d2_sqlite::SqliteConnectionManager;
 use std::net;
@@ -28,6 +29,14 @@ async fn run(
     let mongo_pool: MongoClientManager = MongoClientManager::from_uri(&settings.mongo.uri)
         .await
         .expect("Unable to connect to mongodb");
+    let mongo_settings = settings::get()
+        .expect("Unable to acquire the settings")
+        .mongo;
+
+    let mongo_pool = mongo_pool
+        .connect()
+        .expect("Unable to establish the connection")
+        .database(&mongo_settings.db);
 
     // Connect to the MongoDB database
     let db_redis = Data::new(redis_pool);
@@ -67,9 +76,10 @@ async fn run(
             .service(endpoints::bs_logic::contact)
             .service(
                 web::scope("/v1")
-                    .service(login::login)
+                    .service(login::login_template)
                     .service(login::login_user)
-                    .service(register::register),
+                    .service(register::register_template)
+                    .service(register::register_user),
             )
             .route("/sse", web::get().to(index::sse))
     })
