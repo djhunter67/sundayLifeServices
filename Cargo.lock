@@ -3351,6 +3351,7 @@ dependencies = [
  "actix-files",
  "actix-web",
  "askama",
+ "base64 0.22.1",
  "chacha20",
  "config",
  "dotenvy",

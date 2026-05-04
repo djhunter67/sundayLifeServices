@@ -78,6 +78,8 @@ pub async fn register_user(
         .await
         .pepper();
 
+    tracing::warn!("The value to be recorded: {}", encrypted_pw.get());
+
     // let db: mongodb::Collection<LoginUser> = mongo.collection(
     //     &settings::get()
     //         .expect("Unable to procure the settings")

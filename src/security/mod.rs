@@ -69,26 +69,13 @@ impl PassWorder {
         info!("Salting");
 
         let random_salt: [u8; 16] = rand::random();
-        tracing::warn!(
-            "The random salt: {:?}",
-            hex::encode(&*String::from_utf8_lossy(&random_salt))
-        );
 
         self.pw += &String::from_utf8_lossy(&random_salt);
 
-        // self.pw = random_salt.concat(format!("${}", self.pw).as_bytes());
-        // self.pw.insert(0, '$');
         self.pw
             .insert_str(0, &format!("{}$", &String::from_utf8_lossy(&random_salt)));
 
-        info!("The Salted PW: {}", hex::encode(&self.pw));
-
-        if self.pw.contains('$') {
-            let idx = self.pw.rfind('$');
-            tracing::warn!("The dollar sign is at idx: {idx:#?}");
-        } else {
-            tracing::error!("The dollar sign is not found");
-        }
+        info!("The generated Salt: {}", hex::encode(random_salt));
 
         Self::new(self.pw)
     }
@@ -101,15 +88,49 @@ impl PassWorder {
     )]
     pub fn pepper(mut self) -> Self {
         // self.pw += "the_pepper";
-        self.pw += &String::from_utf8_lossy(&PEPPER);
+
+        let base_64_pepper = base64::encode(PEPPER);
+
+        self.pw += &String::from_utf8_lossy(base_64_pepper.as_bytes());
         info!("The Peppered PW: {}", self.pw);
         Self::new(self.pw)
+    }
+
+    #[instrument(
+        name = "Password deconstructor",
+        level = "info",
+        target = "sundayLifeServices web app",
+        skip(self)
+    )]
+    pub fn deconstruct(&self) -> (String, String, String) {
+        let (salt, hash) = self.pw.split_once('$').expect("No split delimeter found");
+
+        match base64::decode(
+            self.pw
+                .split_at(self.pw.len() - base64::encode(PEPPER).len())
+                .1,
+        ) {
+            Ok(pepper) => (
+                String::from(salt),
+                String::from(hash),
+                String::from_utf8_lossy(&pepper).to_string(),
+            ),
+            Err(err) => {
+                tracing::error!("Base64 decode failure: {err:?}");
+                (
+                    String::from(salt),
+                    String::from(hash),
+                    String::from(self.pw.split_at(self.pw.len() - PEPPER.len()).1),
+                )
+            }
+        }
     }
 }
 
 // Tests for the PassWorder struct
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::unwrap_used)]
     use super::*;
 
     #[tokio::test]
@@ -130,10 +151,44 @@ mod tests {
     fn test_password_peppering() {
         let pw = PassWorder::new("my_secret_password".to_string());
         let peppered_pw = pw.pepper();
-        assert!(
-            peppered_pw
-                .get()
-                .ends_with(&*String::from_utf8_lossy(&PEPPER))
+        assert!(peppered_pw.get().ends_with(base64::encode(PEPPER).as_str()));
+    }
+
+    #[test]
+    fn test_password_deconstruction() {
+        let pw = PassWorder::new("my_secret_password".to_string());
+        let salted_peppered_pw = pw.salt().pepper();
+        let (salt, hash, pepper) = salted_peppered_pw.deconstruct();
+        assert!(!salt.is_empty());
+        assert!(!hash.is_empty());
+        assert_eq!(
+            pepper,
+            PEPPER.iter().map(|b| *b as char).collect::<String>()
         );
+    }
+
+    #[tokio::test]
+    async fn test_pw_encryption_length() {
+        let pw = PassWorder::new("my_secret_password".to_string());
+        let encrypted_pw = pw.encrypt().await;
+        assert_eq!(encrypted_pw.get().len(), 36); // Hex encoding of 18 bytes should be 36 characters
+    }
+
+    #[test]
+    fn test_pw_salt_uniqueness() {
+        let pw1 = PassWorder::new("my_secret_password".to_string());
+        let salted_pw1 = pw1.salt();
+        let pw2 = PassWorder::new("my_secret_password".to_string());
+        let salted_pw2 = pw2.salt();
+        assert_ne!(salted_pw1.get(), salted_pw2.get());
+    }
+
+    #[test]
+    fn test_pw_pepper_consistency() {
+        let pw1 = PassWorder::new("my_secret_password".to_string());
+        let pw2 = PassWorder::new("my_secret_password".to_string());
+        let peppered_pw1 = pw1.pepper();
+        let peppered_pw2 = pw2.pepper();
+        assert_eq!(peppered_pw1.get(), peppered_pw2.get());
     }
 }
