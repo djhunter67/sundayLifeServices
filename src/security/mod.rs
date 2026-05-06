@@ -42,7 +42,7 @@ impl PassWorder {
         target = "sundayLifeServices web app",
         skip(self)
     )]
-    pub async fn encrypt(self) -> Self {
+    pub fn encrypt(self) -> Self {
         let key: [u8; 32] = *b"an example very very secret key!";
         let nonce: [u8; 12] = *b"unique nonce";
 
@@ -54,8 +54,11 @@ impl PassWorder {
 
         info!("Encrypting");
 
-        // Encrypt the pw
+        // let mut pw = Self::new(hex::encode(&cipher_text));
 
+        // pw.pw.insert(16, '$');
+
+        // pw
         Self::new(hex::encode(&cipher_text))
     }
 
@@ -71,10 +74,10 @@ impl PassWorder {
 
         let random_salt: [u8; 16] = rand::random();
 
-        self.pw += &String::from_utf8_lossy(&random_salt);
+        // self.pw += &String::from_utf8_lossy(&random_salt);
 
         self.pw
-            .insert_str(0, &format!("{}$", &String::from_utf8_lossy(&random_salt)));
+            .insert_str(0, &format!("{}$", &hex::encode(random_salt)));
 
         info!("The generated Salt: {}", hex::encode(random_salt));
 
@@ -96,6 +99,18 @@ impl PassWorder {
         info!("The Peppered PW: {}", self.pw);
         Self::new(self.pw)
     }
+
+    // #[instrument(
+    //     name = "Create Hash",
+    //     level = "info",
+    //     target = "sundayLifeServices web app",
+    //     skip(self)
+    // )]
+    // pub async fn create_hash(mut self) -> String {
+    //     let new_hash = self.pw.clone()
+
+    //     String::new()
+    // }
 
     #[instrument(
         name = "Password deconstructor",
@@ -134,18 +149,11 @@ mod tests {
     #![allow(clippy::unwrap_used)]
     use super::*;
 
-    #[tokio::test]
-    async fn test_password_encryption() {
-        let pw = PassWorder::new("my_secret_password".to_string());
-        let encrypted_pw = pw.encrypt().await;
-        assert_ne!(encrypted_pw.get(), "my_secret_password");
-    }
-
     #[test]
-    fn test_password_salting() {
+    fn test_password_encryption() {
         let pw = PassWorder::new("my_secret_password".to_string());
-        let salted_pw = pw.salt();
-        assert!(salted_pw.get().contains('$'));
+        let encrypted_pw = pw.encrypt();
+        assert_ne!(encrypted_pw.get(), "my_secret_password");
     }
 
     #[test]
@@ -172,11 +180,11 @@ mod tests {
         );
     }
 
-    #[tokio::test]
-    async fn test_pw_encryption_length() {
+    #[test]
+    fn test_pw_encryption_length() {
         let pw = PassWorder::new("my_secret_password".to_string());
-        let encrypted_pw = pw.encrypt().await;
-        assert_eq!(encrypted_pw.get().len(), 36); // Hex encoding of 18 bytes should be 36 characters
+        let encrypted_pw = pw.encrypt();
+        assert_eq!(encrypted_pw.get().len(), 36);
     }
 
     #[test]
@@ -195,5 +203,27 @@ mod tests {
         let peppered_pw1 = pw1.pepper();
         let peppered_pw2 = pw2.pepper();
         assert_eq!(peppered_pw1.get(), peppered_pw2.get());
+    }
+
+    #[test]
+    fn test_pw_contains_dollar_sign() {
+        let pw = PassWorder::new("my_secret_password".to_string());
+        let salted_pw = pw.encrypt().salt().pepper();
+        assert!(salted_pw.get().contains('$'));
+    }
+
+    #[test]
+    fn test_random_is_lenght_before_and_after_conversion() {
+        let random_salt: [u8; 16] = rand::random();
+        let key: [u8; 32] = *b"an example very very secret key!";
+        let nonce: [u8; 12] = *b"unique nonce";
+
+        let mut encryptor = ChaCha20::new(&key.into(), &nonce.into());
+
+        let mut cipher_text = random_salt;
+
+        encryptor.apply_keystream(&mut cipher_text);
+
+        assert_eq!(random_salt.len(), cipher_text.len());
     }
 }

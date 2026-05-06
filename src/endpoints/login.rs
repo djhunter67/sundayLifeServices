@@ -68,15 +68,15 @@ pub async fn login_user(
     mongo: Data<mongodb::Database>,
     body: web::Form<LoginUser>,
 ) -> impl Responder {
-    warn!("The user data entered: {:#?}", body.0);
+    warn!("The user data en tered: {:#?}", body.0);
 
     // Validate the user data entered
     let useremail: &str = body.0.email.as_str();
     let password: &str = body.0.password.as_str();
 
-    if password.contains('$') {
-        return HttpResponse::NotAcceptable().finish();
-    }
+    // if password.contains('$') {
+    //     return HttpResponse::NotAcceptable().finish();
+    // }
 
     // Check against the database
     let filter = mongodb::bson::doc! {

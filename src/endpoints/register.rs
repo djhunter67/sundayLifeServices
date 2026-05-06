@@ -7,7 +7,7 @@ use mongodb::bson::doc;
 use serde::{Deserialize, Serialize};
 use tracing::{error, instrument};
 
-use crate::{endpoints::login::LoginUser, security::PassWorder, settings};
+use crate::{security::PassWorder, settings};
 
 /// All things login that need to be handled for the ``SundayLife`` services website.
 
@@ -26,6 +26,13 @@ pub struct RegisterUser {
     pub password: String,
     #[serde(rename = "password_2_input")]
     password_2: String,
+}
+
+#[derive(Serialize)]
+struct RegistrationData {
+    email: String,
+    password_hash: String,
+    password_salt: String,
 }
 
 #[get("/register")]
@@ -63,9 +70,9 @@ pub async fn register_user(
     let password: &str = &body.0.password;
     let password_2: &str = &body.0.password_2;
 
-    if password.contains('$') {
-        return HttpResponse::NotAcceptable().finish();
-    }
+    // if password.contains('$') {
+    // return HttpResponse::NotAcceptable().finish();
+    // }
 
     if !password.eq(password_2) {
         error!("Password not equal during registration");
@@ -73,32 +80,32 @@ pub async fn register_user(
     }
 
     let encrypted_pw: PassWorder = PassWorder::new(password.to_string())
-        .salt()
         .encrypt()
-        .await
+        .salt()
         .pepper();
 
-    tracing::warn!("The value to be recorded: {}", encrypted_pw.get());
+    let (salt, pw, _) = encrypted_pw.deconstruct();
 
-    // let db: mongodb::Collection<LoginUser> = mongo.collection(
-    //     &settings::get()
-    //         .expect("Unable to procure the settings")
-    //         .mongo
-    //         .collection,
-    // );
+    let db: mongodb::Collection<RegistrationData> = mongo.collection(
+        &settings::get()
+            .expect("Unable to procure the settings")
+            .mongo
+            .collection,
+    );
 
-    // // Save the user to the database
-    // let result = db
-    //     .insert_one(LoginUser {
-    //         email: body.0.email,
-    //         password: encrypted_pw.get(),
-    //     })
-    //     .await;
+    // Save the user to the database
+    let result = db
+        .insert_one(RegistrationData {
+            email: body.0.email,
+            password_hash: pw,
+            password_salt: salt,
+        })
+        .await;
 
-    // match result {
-    //     Ok(id) => HttpResponse::Ok().json(format!("User Registered: {}", id.inserted_id)),
-    //     Err(err) => HttpResponse::InternalServerError().json(err.to_string()),
-    // }
+    match result {
+        Ok(id) => HttpResponse::Ok().json(format!("User Registered: {}", id.inserted_id)),
+        Err(err) => HttpResponse::InternalServerError().json(err.to_string()),
+    }
 
-    HttpResponse::Ok().finish()
+    // HttpResponse::Ok().finish()
 }
