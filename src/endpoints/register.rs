@@ -103,7 +103,7 @@ pub async fn register_user(
         .await;
 
     match result {
-        Ok(id) => HttpResponse::Ok().json(format!("User Registered: {}", id.inserted_id)),
+        Ok(id) => HttpResponse::Created().json(format!("User Registered: {}", id.inserted_id)),
         Err(err) => HttpResponse::InternalServerError().json(err.to_string()),
     }
 
