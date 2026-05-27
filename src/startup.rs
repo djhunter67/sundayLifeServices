@@ -23,7 +23,7 @@ async fn run(
 ) -> Result<actix_web::dev::Server, std::io::Error> {
     let sqlite_pool: SqliteConnectionManager = SqliteConnectionManager::file(settings.sqlite.path);
     let redis_pool: RedisConnectionManager =
-        r2d2_redis::RedisConnectionManager::new(settings.redis.url.clone())
+        r2d2_redis::RedisConnectionManager::new(settings.redis.uri.clone())
             .expect("Failed to create Redis connection redis_pool");
 
     let mongo_pool: MongoClientManager = MongoClientManager::from_uri(&settings.mongo.uri)

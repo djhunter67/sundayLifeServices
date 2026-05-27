@@ -10,7 +10,7 @@ mongo:
  connection_timeout: 1
 
 redis:
-  url: "redis://127.0.0.1:6379"
+  uri: "redis://:<password>@10.20.20.32:6379"
   pool_size: 1
   pool_max_open: 16
   pool_max_idle: 8
