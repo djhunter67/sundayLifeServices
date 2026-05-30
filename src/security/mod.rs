@@ -5,7 +5,7 @@ use chacha20::{
     cipher::{KeyIvInit, StreamCipher},
 };
 use serde::{Deserialize, Serialize};
-use tracing::{info, instrument, warn};
+use tracing::instrument;
 
 const PEPPER: [u8; 12] = *b"the_pepperer";
 
@@ -53,7 +53,7 @@ impl PassWorder {
 
         encryptor.apply_keystream(&mut cipher_text);
 
-        info!("Encrypting");
+        tracing::debug!("Encrypting");
 
         // let mut pw = Self::new(hex::encode(&cipher_text));
 
@@ -71,7 +71,7 @@ impl PassWorder {
     )]
     pub fn salt(mut self) -> Self {
         let _salted = String::from("The salted deal");
-        info!("Salting");
+        tracing::debug!("Salting");
 
         let random_salt: [u8; 16] = rand::random();
 

@@ -22,16 +22,3 @@ sqlite:
   schema: "static/schema.sql"
   pool_size: 1
   connection_timeout: 1
-
-postgres:
-  username: "djhunter67"
-  password: "PNF27156"
-  port: 5432
-  host: "127.0.0.1"
-  db: "test"
-  require_auth: true
-  schema: "static/schema.sql"
-  app_name: "web_template"
-  connection_timeout: 1
-  working_memory: "256MB"
-  

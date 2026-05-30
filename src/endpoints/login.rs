@@ -92,7 +92,7 @@ pub async fn login_user(
     let cached_user: Option<String> = match redis_conn.get(cache_key) {
         Ok(cached_user) => Some(cached_user),
         Err(err) => {
-            tracing::warn!("cache-miss: {err}");
+            tracing::debug!("cache-miss: {err}");
             None
         }
     };

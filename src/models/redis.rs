@@ -1,7 +1,5 @@
 //! Initialize and return a connection to the ``Redis`` database.
 
-use actix_web::web::Data;
-
 use r2d2::PooledConnection;
 
 use tracing::instrument;
