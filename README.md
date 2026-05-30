@@ -19,12 +19,12 @@ The design and business logic of the site are to be provided by the proprietor o
 - [ ] implement the four other html pages
 - [ ] insert a user login (will be required for online payment later)
 - [ ] implement user authorization 
-- [ ] implement user athentication
+- [X] implement user athentication
 - [ ] Mongodb to save user information
-- [ ] Hash and salt user information (likely passwords only)
+- [X] Hash and salt user passwords
 - [ ] Write tests to ensure functionality of payments
 - [ ] Setup Github Actions to function on push
 - [ ] Write tests to ensure functionality of user auth
 - [X] Implement the mobile view of the web application
-- [ ] Setup Redis as a middle layer for near realtime retrieval
+- [X] Setup Redis as a middle layer for near realtime retrieval
 - [ ] Launch the site to Fly.io on the free layer
