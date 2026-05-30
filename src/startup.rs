@@ -5,9 +5,9 @@ use actix_web::web::{self, Data};
 use actix_web::{App, HttpServer, http::KeepAlive, middleware};
 use mongodb::Database;
 use r2d2::ManageConnection;
-use r2d2_redis::RedisConnectionManager;
 use r2d2_sqlite::SqliteConnectionManager;
 use std::net;
+use std::time::Duration;
 use tracing::{debug, info, instrument, warn};
 
 pub const PARSE_COUNT: u8 = 9;
@@ -23,9 +23,15 @@ async fn run(
     settings: Settings,
 ) -> Result<actix_web::dev::Server, std::io::Error> {
     let sqlite_pool: SqliteConnectionManager = SqliteConnectionManager::file(settings.sqlite.path);
-    let redis_pool: RedisConnectionManager =
-        r2d2_redis::RedisConnectionManager::new(settings.redis.uri.clone())
-            .expect("Failed to create Redis connection redis_pool");
+    let redis_pool: redis::Client = redis::Client::open(settings.redis.uri.clone())
+        .expect("Failed to create Redis connection redis_pool");
+    let redis_pool: r2d2::Pool<redis::Client> = r2d2::Pool::builder()
+        .max_size(settings.redis.pool_size)
+        .connection_timeout(Duration::from_secs(
+            settings.redis.pool_timeout_seconds.into(),
+        ))
+        .build(redis_pool)
+        .expect("Unable to build Redis pool");
 
     let mongo_pool: MongoClientManager = MongoClientManager::from_uri(&settings.mongo.uri)
         .await

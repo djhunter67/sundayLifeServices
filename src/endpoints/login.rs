@@ -3,11 +3,17 @@ use actix_web::{
     web::{self, Data},
 };
 use askama::Template;
-use mongodb::bson::{self, oid::ObjectId};
+use mongodb::bson::{self};
+use redis::Commands;
 use serde::{Deserialize, Serialize};
-use tracing::{debug, instrument, warn};
+use tracing::{debug, instrument};
 
-use crate::{endpoints::register::RegisterUser, security::LoginChecker, settings};
+use crate::{
+    endpoints::register::RegisterUser,
+    models::redis::establish_connection,
+    security::{LoginChecker, PassWorder},
+    settings,
+};
 
 /// All things login that need to be handled for the ``SundayLife`` services website.
 
@@ -60,68 +66,79 @@ pub async fn login_template() -> HttpResponse {
     name = "User login attempted",
     level = "info",
     target = "sundayLifeServices web app",
-    skip(body, mongo)
+    skip(body, mongo, redis)
 )]
 pub async fn login_user(
     mongo: Data<mongodb::Database>,
+    redis: Data<r2d2::Pool<redis::Client>>,
     body: web::Form<LoginUser>,
 ) -> impl Responder {
-    warn!("The user data entered: {:#?}", body.0);
+    debug!("The user data entered: {:#?}", body.0);
 
     // Validate the user data entered
+    // let identification: ObjectId = body.0.id;
     let useremail: &str = body.0.email.as_str();
     let password: &str = body.0.password.as_str();
 
-    // if password.contains('$') {
-    //     return HttpResponse::NotAcceptable().finish();
-    // }
-
-    // Check against the database
     let filter = mongodb::bson::doc! {
-    "_id": ObjectId::parse_str("6a199b817ed964a04d80c21a").expect("Unable to parse the Object_id")
+    "email":  useremail
     };
 
-    // Error if the database is unavailable
-    // let Some(db) = Arc::into_inner(mongo.into_inner()) else {
-    // return HttpResponse::InternalServerError().body("DATABASE query error");
-    // };
+    // Check redis first
+    tracing::info!("Checking the cache-layer");
+    let cache_key = format!("user:auth:{useremail}");
+    let mut redis_conn = establish_connection(redis.get_ref().clone());
 
-    let db = mongo
-        .into_inner()
-        .client()
-        .database(&settings::get().expect("Fail to get settings").mongo.db);
-
-    let db: mongodb::Collection<bson::Document> = db.collection(
-        &settings::get()
-            .expect("Unable to acquire settings")
-            .mongo
-            .collection,
-    );
-
-    let user = db.find_one(filter).await;
-
-    let user_clone = match user.clone() {
-        Ok(user_clone) => bson::from_document::<LoginChecker>(user_clone.expect("No joy"))
-            .expect("Unable to convert"),
+    let cached_user: Option<String> = match redis_conn.get(cache_key) {
+        Ok(cached_user) => Some(cached_user),
         Err(err) => {
-            tracing::error!("No conversion possible from Document to LoginChecker: {err}");
-            return HttpResponse::Unauthorized().body("Invalid login credentials");
+            tracing::warn!("cache-miss: {err}");
+            None
         }
     };
 
-    if user_clone.pw_verify(password.to_string()) {
-        tracing::warn!("PASSWORD VERIFIED! -> True");
+    let user_auth: LoginChecker = if let Some(json_data) = cached_user {
+        tracing::warn!("cache-hit");
+
+        let json_result: LoginChecker = serde_json::from_str::<LoginChecker>(&json_data)
+            .expect("Unable to convert json data to LoginChecker");
+
+        // Deconstruct the entire pw hash into the salt and pw
+        let pw_hash: PassWorder = PassWorder::new(json_result.get_pw());
+
+        let (_salt, pw, _pepper) = pw_hash.deconstruct();
+
+        json_result.set_pw(pw)
     } else {
-        tracing::error!("PASSWORD INCORRECT");
+        // TODO: Change this from an error to a warn
+        tracing::error!("cache-miss");
+
+        // Mongodb check of the user
+        let db: mongodb::Collection<bson::Document> = mongo.collection(
+            &settings::get()
+                .expect("Unable to acquire settings")
+                .mongo
+                .collection,
+        );
+
+        let user = match db.find_one(filter).await {
+            Ok(user) => bson::from_document::<LoginChecker>(user.expect("No joy"))
+                .expect("Unable to convert"),
+            Err(err) => {
+                tracing::error!("No conversion possible from Document to LoginChecker: {err}");
+                LoginChecker::default()
+            }
+        };
+
+        user
+    };
+
+    if user_auth.pw_verify(password.to_string()) {
+        tracing::warn!("PASSWORD VERIFIED! -> True");
+        return HttpResponse::Ok().body("Login successfully");
     }
 
-    tracing::warn!("The MONGODB results: {:#?}", user);
-
-    match user {
-        Ok(Some(_)) => HttpResponse::Ok().body("Login successful"),
-        Ok(None) => HttpResponse::Unauthorized().body(format!(
-            "Invalid user entered credentials: {useremail} -- {password}",
-        )),
-        Err(err) => HttpResponse::Ok().body(err.to_string()),
-    }
+    // THIS RETURN VAL IS TEMPORARY
+    tracing::error!("PASSWORD INCORRECT");
+    return HttpResponse::Ok().body(format!("Invalid user entered credentials: {useremail}"));
 }

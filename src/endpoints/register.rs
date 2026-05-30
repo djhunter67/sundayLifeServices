@@ -4,10 +4,15 @@ use actix_web::{
 };
 use askama::Template;
 use mongodb::bson::doc;
+use redis::Commands;
 use serde::{Deserialize, Serialize};
 use tracing::{error, instrument};
 
-use crate::{security::PassWorder, settings};
+use crate::{
+    models::redis::establish_connection,
+    security::{LoginChecker, PassWorder},
+    settings,
+};
 
 /// All things login that need to be handled for the ``SundayLife`` services website.
 
@@ -60,23 +65,30 @@ pub async fn register_template() -> HttpResponse {
     name = "User registration attempted",
     level = "info",
     target = "sundayLifeServices web app",
-    skip(body, mongo)
+    skip(body, mongo, redis)
 )]
 pub async fn register_user(
     mongo: Data<mongodb::Database>,
+    redis: Data<r2d2::Pool<redis::Client>>,
     body: web::Form<RegisterUser>,
 ) -> HttpResponse {
     // Validate the user data entered
+    let email: String = String::from(&body.0.email);
     let password: &str = &body.0.password;
     let password_2: &str = &body.0.password_2;
-
-    // if password.contains('$') {
-    // return HttpResponse::NotAcceptable().finish();
-    // }
 
     if !password.eq(password_2) {
         error!("Password not equal during registration");
         return HttpResponse::NotAcceptable().json("Passwords do not match");
+    }
+
+    let restricted_and_invisible_chars = ['\n', '\r', '\t', '\0', '\x0B', '\x0C'];
+
+    if password
+        .chars()
+        .any(|c| restricted_and_invisible_chars.contains(&c))
+    {
+        return HttpResponse::NotAcceptable().finish();
     }
 
     let encrypted_pw: PassWorder = PassWorder::new(password.to_string())
@@ -86,6 +98,7 @@ pub async fn register_user(
 
     let (salt, pw, _) = encrypted_pw.deconstruct();
 
+    // Save the user to Mongodb
     let db: mongodb::Collection<RegistrationData> = mongo.collection(
         &settings::get()
             .expect("Unable to procure the settings")
@@ -96,16 +109,65 @@ pub async fn register_user(
     // Save the user to the database
     let result = db
         .insert_one(RegistrationData {
-            email: body.0.email,
+            email: email.clone(),
             password_hash: pw,
             password_salt: salt,
         })
         .await;
 
     match result {
-        Ok(id) => HttpResponse::Created().json(format!("User Registered: {}", id.inserted_id)),
+        Ok(id) => {
+            tracing::warn!("Saving to the cache-layer");
+            let cache_key = format!("user:auth:{}", body.0.email);
+
+            let auth_data = LoginChecker::new(email, encrypted_pw.get());
+
+            if let Ok(json_data) = serde_json::to_string(&auth_data) {
+                let mut redis_conn = establish_connection(redis.get_ref().clone());
+                // Debug log
+                tracing::warn!("the json data to be saved: {:#?}", json_data);
+                // Set the key in Redis
+                // let _: redis::RedisResult<()> = redis_conn.set_ex(&cache_key, json_data, 3600);
+                match redis_conn.set_ex(&cache_key, json_data, 3600) {
+                    Ok(()) => (),
+                    Err(err) => tracing::error!("Error saving to the cache layer -> {err:#?}"),
+                }
+            }
+
+            HttpResponse::Created().json(format!("User Registered: {}", id.inserted_id))
+        }
         Err(err) => HttpResponse::InternalServerError().json(err.to_string()),
     }
+}
 
-    // HttpResponse::Ok().finish()
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use actix_web::{App, test};
+
+    #[actix_web::test]
+    async fn test_register_a_user() {
+        let app = test::init_service(App::new().service(register_template)).await;
+
+        let req = test::TestRequest::get().uri("/register").to_request();
+        let resp = test::call_service(&app, req).await;
+        assert!(resp.status().is_success());
+    }
+
+    #[actix_web::test]
+    async fn test_user_is_registered() {
+        let app = test::init_service(App::new().service(register_user)).await;
+
+        let req = test::TestRequest::post()
+            .uri("/register_user")
+            .set_form(&RegisterUser {
+                email: String::from("some_email@email.com"),
+                password: "some_password".to_string(),
+                password_2: "some_password".to_string(),
+            })
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+
+        assert!(resp.status().is_server_error());
+    }
 }

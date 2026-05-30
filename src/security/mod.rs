@@ -4,11 +4,8 @@ use chacha20::{
     ChaCha20,
     cipher::{KeyIvInit, StreamCipher},
 };
-use mongodb::bson::Document;
 use serde::{Deserialize, Serialize};
 use tracing::{info, instrument, warn};
-
-use crate::endpoints::login::LoginUser;
 
 const PEPPER: [u8; 12] = *b"the_pepperer";
 
@@ -83,7 +80,7 @@ impl PassWorder {
         self.pw
             .insert_str(0, &format!("{}$", &hex::encode(random_salt)));
 
-        info!("The generated Salt: {}", hex::encode(random_salt));
+        // info!("The generated Salt: {}", hex::encode(random_salt));
 
         Self::new(self.pw)
     }
@@ -100,7 +97,7 @@ impl PassWorder {
         let base_64_pepper = general_purpose::STANDARD.encode(PEPPER);
 
         self.pw += &String::from_utf8_lossy(base_64_pepper.as_bytes());
-        info!("The Peppered PW: {}", self.pw);
+        // info!("The Peppered PW: {}", self.pw);
         Self::new(self.pw)
     }
 
@@ -147,7 +144,7 @@ impl PassWorder {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct LoginChecker {
     email: String,
     password_hash: String,
@@ -158,18 +155,64 @@ impl LoginChecker {
         name = "Password Verifier",
         level = "info",
         target = "sundayLifeServices web app",
+        skip(email, password_hash)
+    )]
+    pub fn new(email: String, password_hash: String) -> Self {
+        Self {
+            email,
+            password_hash,
+        }
+    }
+
+    #[instrument(
+        name = "get the pw hash",
+        level = "info",
+        target = "sundayLifeServices web app",
+        skip(self)
+    )]
+    pub fn get_pw(&self) -> String {
+        self.password_hash.clone()
+    }
+
+    #[instrument(
+        name = "Password Verifier",
+        level = "info",
+        target = "sundayLifeServices web app",
+        skip(self, pw)
+    )]
+    pub fn set_pw(self, pw: String) -> Self {
+        Self {
+            email: self.email,
+            password_hash: pw,
+        }
+    }
+
+    #[instrument(
+        name = "Get the user email",
+        level = "info",
+        target = "sundayLifeServices web app",
+        skip(self,)
+    )]
+    pub fn get_email(&self) -> String {
+        self.email.clone()
+    }
+
+    #[instrument(
+        name = "Password Verifier",
+        level = "info",
+        target = "sundayLifeServices web app",
         skip(self, user_pw)
     )]
     pub fn pw_verify(&self, user_pw: String) -> bool {
-        tracing::info!("Verifying the user entered password");
+        tracing::debug!("Verifying the user entered password");
 
         let encrypted_pw: PassWorder = PassWorder::new(user_pw).encrypt().salt().pepper();
 
         let (_salt, pw, _) = encrypted_pw.deconstruct();
-        tracing::info!("The decrypted password: {pw}");
+        tracing::debug!("The decrypted password: {pw}");
 
         let doc_pw = self.password_hash.clone();
-        tracing::info!("The entered in password: {doc_pw}");
+        tracing::debug!("The entered in password: {doc_pw}");
 
         if pw.eq(&doc_pw) {
             return true;
@@ -260,5 +303,194 @@ mod tests {
         encryptor.apply_keystream(&mut cipher_text);
 
         assert_eq!(random_salt.len(), cipher_text.len());
+    }
+
+    #[test]
+    fn test_login_checker_verfier() {
+        let mut verifier: LoginChecker = LoginChecker {
+            email: "the_email".to_string(),
+            password_hash: "the_password".to_string(),
+        };
+
+        let user_pw = "the_password".to_string();
+
+        let encrypted_pw: PassWorder = PassWorder::new(verifier.password_hash.clone())
+            .encrypt()
+            .salt()
+            .pepper();
+
+        let (_, pw, _) = encrypted_pw.deconstruct();
+
+        verifier.password_hash = pw;
+
+        assert!(verifier.pw_verify(user_pw));
+    }
+
+    #[test]
+    fn test_login_verifier_failure() {
+        let mut verifier: LoginChecker = LoginChecker {
+            email: "the_email".to_string(),
+            password_hash: "the_password".to_string(),
+        };
+
+        let user_pw = "wrong_password".to_string();
+
+        let encrypted_pw: PassWorder = PassWorder::new(verifier.password_hash.clone())
+            .encrypt()
+            .salt()
+            .pepper();
+
+        let (_, pw, _) = encrypted_pw.deconstruct();
+
+        verifier.password_hash = pw;
+
+        assert!(!verifier.pw_verify(user_pw));
+    }
+
+    #[test]
+    fn test_login_verifier_with_salt_and_pepper() {
+        let mut verifier: LoginChecker = LoginChecker {
+            email: "the_email".to_string(),
+            password_hash: "the_password".to_string(),
+        };
+
+        let user_pw = "the_password".to_string();
+
+        let encrypted_pw: PassWorder = PassWorder::new(verifier.password_hash.clone())
+            .encrypt()
+            .salt()
+            .pepper();
+
+        let (_, pw, _) = encrypted_pw.deconstruct();
+
+        verifier.password_hash = pw;
+
+        assert!(verifier.pw_verify(user_pw));
+    }
+
+    #[test]
+    fn test_login_verifier_with_incorrect_password() {
+        let mut verifier: LoginChecker = LoginChecker {
+            email: "the_email".to_string(),
+            password_hash: "the_password".to_string(),
+        };
+
+        let user_pw = "incorrect_password".to_string();
+
+        let encrypted_pw: PassWorder = PassWorder::new(verifier.password_hash.clone())
+            .encrypt()
+            .salt()
+            .pepper();
+
+        let (_, pw, _) = encrypted_pw.deconstruct();
+
+        verifier.password_hash = pw;
+
+        assert!(!verifier.pw_verify(user_pw));
+    }
+
+    #[test]
+    fn test_login_verifier_with_empty_password() {
+        let mut verifier: LoginChecker = LoginChecker {
+            email: "the_email".to_string(),
+            password_hash: "the_password".to_string(),
+        };
+
+        let user_pw = String::new();
+
+        let encrypted_pw: PassWorder = PassWorder::new(verifier.password_hash.clone())
+            .encrypt()
+            .salt()
+            .pepper();
+
+        let (_, pw, _) = encrypted_pw.deconstruct();
+
+        verifier.password_hash = pw;
+
+        assert!(!verifier.pw_verify(user_pw));
+    }
+
+    #[test]
+    fn test_login_verifier_with_special_characters() {
+        let mut verifier: LoginChecker = LoginChecker {
+            email: "the_email".to_string(),
+            password_hash: "p@$$w0rd!".to_string(),
+        };
+
+        let user_pw = "p@$$w0rd!".to_string();
+
+        let encrypted_pw: PassWorder = PassWorder::new(verifier.password_hash.clone())
+            .encrypt()
+            .salt()
+            .pepper();
+
+        let (_, pw, _) = encrypted_pw.deconstruct();
+
+        verifier.password_hash = pw;
+
+        assert!(verifier.pw_verify(user_pw));
+    }
+
+    #[test]
+    fn test_login_verifier_with_long_password() {
+        let mut verifier: LoginChecker = LoginChecker {
+            email: "the_email".to_string(),
+            password_hash: "a_very_long_password_that_exceeds_normal_length".to_string(),
+        };
+
+        let user_pw = "a_very_long_password_that_exceeds_normal_length".to_string();
+
+        let encrypted_pw: PassWorder = PassWorder::new(verifier.password_hash.clone())
+            .encrypt()
+            .salt()
+            .pepper();
+
+        let (_, pw, _) = encrypted_pw.deconstruct();
+
+        verifier.password_hash = pw;
+
+        assert!(verifier.pw_verify(user_pw));
+    }
+
+    #[test]
+    fn test_passwords_with_spaces_and_tabs() {
+        let mut verifier: LoginChecker = LoginChecker {
+            email: "the_email".to_string(),
+            password_hash: "   password_with_spaces_and_tabs\t".to_string(),
+        };
+
+        let user_pw = "   password_with_spaces_and_tabs\t".to_string();
+
+        let encrypted_pw: PassWorder = PassWorder::new(verifier.password_hash.clone())
+            .encrypt()
+            .salt()
+            .pepper();
+
+        let (_, pw, _) = encrypted_pw.deconstruct();
+
+        verifier.password_hash = pw;
+
+        assert!(verifier.pw_verify(user_pw));
+    }
+
+    #[test]
+    fn test_passwords_with_spaces_and_tabs_2() {
+        let mut verifier: LoginChecker = LoginChecker {
+            email: "the_email".to_string(),
+            password_hash: "   password with spaces and tabs\t".to_string(),
+        };
+
+        let user_pw = "   password with spaces and tabs\t".to_string();
+
+        let encrypted_pw: PassWorder = PassWorder::new(verifier.password_hash.clone())
+            .encrypt()
+            .salt()
+            .pepper();
+
+        let (_, pw, _) = encrypted_pw.deconstruct();
+
+        verifier.password_hash = pw;
+
+        assert!(verifier.pw_verify(user_pw));
     }
 }

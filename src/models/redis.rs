@@ -1,12 +1,8 @@
 //! Initialize and return a connection to the ``Redis`` database.
 
-use crate::settings::Settings;
 use actix_web::web::Data;
-use std::{sync::Arc, time::Duration};
 
-use r2d2::Pool;
-
-use r2d2_redis::RedisConnectionManager;
+use r2d2::PooledConnection;
 
 use tracing::instrument;
 
@@ -14,10 +10,10 @@ use tracing::instrument;
 #[instrument(
     name = "Establishing a connection to the Redis database",
     level = "info",
-    skip(settings, manager)
+    skip(manager)
 )]
 /// # Returns
-///   - Returns a `Pool` of `RedisConnectionManager` to the redis db if successful
+///   - Returns a `Pool` of `redis::Client` to the redis db if successful
 ///
 /// # Arguments
 ///   - `settings` - The settings for the application
@@ -27,42 +23,33 @@ use tracing::instrument;
 ///
 /// Initialize and return a connection to the ``Redis`` database.
 
-pub fn establish_connection(
-    settings: &Settings,
-    manager: Data<RedisConnectionManager>,
-) -> Pool<RedisConnectionManager> {
-    r2d2::Pool::builder()
-        .max_size(settings.redis.pool_size)
-        .connection_timeout(Duration::from_secs(
-            settings.redis.pool_timeout_seconds.into(),
-        ))
-        .build(
-            Arc::into_inner(manager.into_inner())
-                .map_or_else(|| panic!("No Manager found"), |manager| manager),
-        )
-        .expect("Failed to create pool")
+pub fn establish_connection(manager: r2d2::Pool<redis::Client>) -> PooledConnection<redis::Client> {
+    manager.get().expect("No Redis cache layer available")
 }
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used)]
 mod tests {
-    use r2d2_redis::redis::{Cmd, Commands, ConnectionLike, Value};
+    use r2d2::Pool;
+    use redis::{Cmd, Commands, ConnectionLike, Value};
     use rstest::{fixture, rstest};
-    use std::thread::spawn;
+    use std::{num::NonZero, thread::spawn, time::Duration};
 
     use crate::settings::{self};
 
-    use super::*;
-
     #[fixture]
-    fn pool() -> Pool<RedisConnectionManager> {
-        let manager = RedisConnectionManager::new(settings::get().unwrap().redis.uri)
-            .expect("Failed to create Redis manager");
-        establish_connection(&settings::get().unwrap(), Data::new(manager))
+    fn pool() -> Pool<redis::Client> {
+        let manager = redis::Client::open(settings::get().unwrap().redis.uri)
+            .expect("Failed to create Redis client");
+        Pool::builder()
+            .max_size(15)
+            .connection_timeout(Duration::from_secs(5))
+            .build(manager)
+            .expect("Failed to create Redis connection pool")
     }
 
     #[rstest]
-    fn test_can_write_to_redis(pool: Pool<RedisConnectionManager>) {
+    fn test_can_write_to_redis(pool: Pool<redis::Client>) {
         let mut conn = pool.get().unwrap();
 
         // Test query
@@ -75,7 +62,7 @@ mod tests {
     }
 
     #[rstest]
-    fn test_can_write_to_redis_concurrently(pool: Pool<RedisConnectionManager>) {
+    fn test_can_write_to_redis_concurrently(pool: Pool<redis::Client>) {
         let handles = (0..10)
             .map(|_| {
                 let pool = pool.clone();
@@ -95,7 +82,7 @@ mod tests {
     }
 
     #[rstest]
-    fn test_single_writer_redis(pool: Pool<RedisConnectionManager>) {
+    fn test_single_writer_redis(pool: Pool<redis::Client>) {
         // Insert 5 items using a for loop
         let mut conn = pool.get().unwrap();
         conn.set::<&str, &str, String>("test_2", "test_2").unwrap();
@@ -109,7 +96,7 @@ mod tests {
     }
 
     #[rstest]
-    fn test_write_and_read_redis(pool: Pool<RedisConnectionManager>) {
+    fn test_write_and_read_redis(pool: Pool<redis::Client>) {
         // Create table if not exists
         let mut conn = pool.get().unwrap();
 
@@ -130,15 +117,15 @@ mod tests {
     }
 
     #[rstest]
-    fn test_basic_connection_and_ping_redis(pool: Pool<RedisConnectionManager>) {
+    fn test_basic_connection_and_ping_redis(pool: Pool<redis::Client>) {
         let mut conn = pool.get().unwrap();
         // Basic ping command to verify connection
         let result = conn.req_command(Cmd::new().arg("PING")).unwrap();
-        assert_eq!(result, Value::Status(String::from("PONG")));
+        assert_eq!(result, Value::SimpleString(String::from("PONG")));
     }
 
     #[rstest]
-    fn test_string_operations_redis(pool: Pool<RedisConnectionManager>) {
+    fn test_string_operations_redis(pool: Pool<redis::Client>) {
         // Establish a connection
         let mut conn = pool.get().unwrap();
 
@@ -158,7 +145,7 @@ mod tests {
     }
 
     #[rstest]
-    fn test_list_operations_redis(pool: Pool<RedisConnectionManager>) {
+    fn test_list_operations_redis(pool: Pool<redis::Client>) {
         // Establish a connection
         let mut conn = pool.get().unwrap();
 
@@ -178,7 +165,8 @@ mod tests {
 
         // Remove the list
         for _ in 0..elements.len() {
-            conn.rpop::<&str, String>(test_list).unwrap();
+            conn.rpop::<&str, Vec<String>>(test_list, Some(NonZero::new(1).unwrap()))
+                .unwrap();
         }
         assert_eq!(elements.len(), 3);
         assert_eq!(
@@ -195,7 +183,7 @@ mod tests {
     }
 
     #[rstest]
-    fn test_key_expiration_redis(pool: Pool<RedisConnectionManager>) {
+    fn test_key_expiration_redis(pool: Pool<redis::Client>) {
         // Establish a connection
         let mut conn = pool.get().unwrap();
 
