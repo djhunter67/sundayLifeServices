@@ -4,7 +4,11 @@ use chacha20::{
     ChaCha20,
     cipher::{KeyIvInit, StreamCipher},
 };
+use mongodb::bson::Document;
+use serde::{Deserialize, Serialize};
 use tracing::{info, instrument, warn};
+
+use crate::endpoints::login::LoginUser;
 
 const PEPPER: [u8; 12] = *b"the_pepperer";
 
@@ -143,6 +147,37 @@ impl PassWorder {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct LoginChecker {
+    email: String,
+    password_hash: String,
+}
+
+impl LoginChecker {
+    #[instrument(
+        name = "Password Verifier",
+        level = "info",
+        target = "sundayLifeServices web app",
+        skip(self, user_pw)
+    )]
+    pub fn pw_verify(&self, user_pw: String) -> bool {
+        tracing::info!("Verifying the user entered password");
+
+        let encrypted_pw: PassWorder = PassWorder::new(user_pw).encrypt().salt().pepper();
+
+        let (_salt, pw, _) = encrypted_pw.deconstruct();
+        tracing::info!("The decrypted password: {pw}");
+
+        let doc_pw = self.password_hash.clone();
+        tracing::info!("The entered in password: {doc_pw}");
+
+        if pw.eq(&doc_pw) {
+            return true;
+        }
+
+        false
+    }
+}
 // Tests for the PassWorder struct
 #[cfg(test)]
 mod tests {

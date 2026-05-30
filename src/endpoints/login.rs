@@ -1,15 +1,13 @@
-use std::sync::Arc;
-
 use actix_web::{
     HttpResponse, Responder, get, post,
     web::{self, Data},
 };
 use askama::Template;
-use mongodb::bson;
+use mongodb::bson::{self, oid::ObjectId};
 use serde::{Deserialize, Serialize};
 use tracing::{debug, instrument, warn};
 
-use crate::{endpoints::register::RegisterUser, settings};
+use crate::{endpoints::register::RegisterUser, security::LoginChecker, settings};
 
 /// All things login that need to be handled for the ``SundayLife`` services website.
 
@@ -68,7 +66,7 @@ pub async fn login_user(
     mongo: Data<mongodb::Database>,
     body: web::Form<LoginUser>,
 ) -> impl Responder {
-    warn!("The user data en tered: {:#?}", body.0);
+    warn!("The user data entered: {:#?}", body.0);
 
     // Validate the user data entered
     let useremail: &str = body.0.email.as_str();
@@ -80,13 +78,18 @@ pub async fn login_user(
 
     // Check against the database
     let filter = mongodb::bson::doc! {
-    "useremail": useremail,
-    "passw": password
+    "_id": ObjectId::parse_str("6a199b817ed964a04d80c21a").expect("Unable to parse the Object_id")
     };
 
-    let Some(db) = Arc::into_inner(mongo.into_inner()) else {
-        return HttpResponse::InternalServerError().finish();
-    };
+    // Error if the database is unavailable
+    // let Some(db) = Arc::into_inner(mongo.into_inner()) else {
+    // return HttpResponse::InternalServerError().body("DATABASE query error");
+    // };
+
+    let db = mongo
+        .into_inner()
+        .client()
+        .database(&settings::get().expect("Fail to get settings").mongo.db);
 
     let db: mongodb::Collection<bson::Document> = db.collection(
         &settings::get()
@@ -97,9 +100,28 @@ pub async fn login_user(
 
     let user = db.find_one(filter).await;
 
+    let user_clone = match user.clone() {
+        Ok(user_clone) => bson::from_document::<LoginChecker>(user_clone.expect("No joy"))
+            .expect("Unable to convert"),
+        Err(err) => {
+            tracing::error!("No conversion possible from Document to LoginChecker: {err}");
+            return HttpResponse::Unauthorized().body("Invalid login credentials");
+        }
+    };
+
+    if user_clone.pw_verify(password.to_string()) {
+        warn!("PASSWORD VERIFIED! -> True");
+    } else {
+        tracing::error!("PASSWORD INCORRECT");
+    }
+
+    tracing::warn!("The MONGODB results: {:#?}", user);
+
     match user {
         Ok(Some(_)) => HttpResponse::Ok().body("Login successful"),
-        Ok(None) => HttpResponse::Unauthorized().body("Invalid credentials"),
+        Ok(None) => HttpResponse::Unauthorized().body(format!(
+            "Invalid user entered credentials: {useremail} -- {password}",
+        )),
         Err(err) => HttpResponse::Ok().body(err.to_string()),
     }
 }

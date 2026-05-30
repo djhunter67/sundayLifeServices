@@ -2,7 +2,7 @@ application:
   port: 8000
 
 mongo:
- uri: "mongodb+srv://djhunter67:<password>@devcluster.jbdh4mk.mongodb.net/?appName=devCluster"
+ uri: "mongodb://djhunter67:secret_passers@10.20.20.32:27017/?authSource=admin&authMechanism=SCRAM-SHA-256"
  db: "sundayLife"
  collection: "test"
  require_auth: true
@@ -34,3 +34,4 @@ postgres:
   app_name: "web_template"
   connection_timeout: 1
   working_memory: "256MB"
+  

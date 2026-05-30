@@ -31,6 +31,7 @@ impl From<Sqlite> for SqliteData {
 }
 
 impl SqliteData {
+    #[allow(dead_code)]
     fn new(data: String, settings: Sqlite) -> Self {
         let mut sqlite_data = Self::from(settings);
         sqlite_data.data = data;

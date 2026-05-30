@@ -8,7 +8,7 @@ if [ -f "$TARGET_FILE" ]; then
 
     # Replace the MongoDB URI (the first URI line) with a placeholder
     # This targets the specific pattern used in build.rs [1]
-    sed -i 's|mongodb+srv://.*@devcluster.*|mongodb+srv://djhunter67:<password>@devcluster.jbdh4mk.mongodb.net/?appName=devCluster"|' "$TARGET_FILE"
+    sed -i 's|mongodb://.*@.*|mongodb://djhunter67:<password>@10.20.20.32:27017/?authSource=djhunter67"|' "$TARGET_FILE"
     
     # Replace the Redis URI (the second URI line) with a placeholder
     # This targets the IP 10.20.20.32 mentioned in build.rs [1]

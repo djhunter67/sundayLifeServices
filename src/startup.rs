@@ -3,6 +3,7 @@ use crate::models::r2d2_mongodb::client_manager::MongoClientManager;
 use crate::settings::{self, Settings};
 use actix_web::web::{self, Data};
 use actix_web::{App, HttpServer, http::KeepAlive, middleware};
+use mongodb::Database;
 use r2d2::ManageConnection;
 use r2d2_redis::RedisConnectionManager;
 use r2d2_sqlite::SqliteConnectionManager;
@@ -33,7 +34,7 @@ async fn run(
         .expect("Unable to acquire the settings")
         .mongo;
 
-    let mongo_pool = mongo_pool
+    let mongo_pool: Database = mongo_pool
         .connect()
         .expect("Unable to establish the connection")
         .database(&mongo_settings.db);

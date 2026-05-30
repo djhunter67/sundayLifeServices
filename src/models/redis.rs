@@ -56,7 +56,7 @@ mod tests {
 
     #[fixture]
     fn pool() -> Pool<RedisConnectionManager> {
-        let manager = RedisConnectionManager::new(settings::get().unwrap().redis.url)
+        let manager = RedisConnectionManager::new(settings::get().unwrap().redis.uri)
             .expect("Failed to create Redis manager");
         establish_connection(&settings::get().unwrap(), Data::new(manager))
     }
