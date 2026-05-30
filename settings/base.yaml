@@ -2,7 +2,7 @@ application:
   port: 8000
 
 mongo:
- uri: "mongodb://djhunter67:secret_passers@10.20.20.32:27017/?authSource=admin&authMechanism=SCRAM-SHA-256"
+ uri: "mongodb://djhunter67:<password>@10.20.20.32:27017/?authSource=djhunter67"
  db: "sundayLife"
  collection: "test"
  require_auth: true

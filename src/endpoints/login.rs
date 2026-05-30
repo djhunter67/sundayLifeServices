@@ -110,7 +110,7 @@ pub async fn login_user(
     };
 
     if user_clone.pw_verify(password.to_string()) {
-        warn!("PASSWORD VERIFIED! -> True");
+        tracing::warn!("PASSWORD VERIFIED! -> True");
     } else {
         tracing::error!("PASSWORD INCORRECT");
     }
