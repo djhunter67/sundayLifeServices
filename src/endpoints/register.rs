@@ -188,6 +188,6 @@ mod tests {
 
         let resp_body = test::read_body(resp).await;
 
-        assert!(resp_body.is_empty());
+        assert!(!resp_body.is_empty());
     }
 }
