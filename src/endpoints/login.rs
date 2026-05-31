@@ -11,7 +11,7 @@ use tracing::{debug, instrument};
 use crate::{
     endpoints::register::RegisterUser,
     models::redis::establish_connection,
-    security::{LoginChecker, PassWorder},
+    security::{login::LoginChecker, passworder::PassWorder},
     settings,
 };
 
@@ -100,7 +100,7 @@ pub async fn login_user(
     let user_auth: LoginChecker = if let Some(json_data) = cached_user {
         tracing::warn!("cache-hit");
 
-        let json_result: LoginChecker = serde_json::from_str::<LoginChecker>(&json_data)
+        let mut json_result: LoginChecker = serde_json::from_str::<LoginChecker>(&json_data)
             .expect("Unable to convert json data to LoginChecker");
 
         // Deconstruct the entire pw hash into the salt and pw
@@ -108,7 +108,8 @@ pub async fn login_user(
 
         let (_salt, pw, _pepper) = pw_hash.deconstruct();
 
-        json_result.set_pw(pw)
+        json_result.set_pw(pw);
+        json_result
     } else {
         // TODO: Change this from an error to a warn
         tracing::error!("cache-miss");

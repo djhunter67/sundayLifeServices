@@ -10,7 +10,7 @@ use tracing::{error, instrument};
 
 use crate::{
     models::redis::establish_connection,
-    security::{LoginChecker, PassWorder},
+    security::{login::LoginChecker, passworder::PassWorder},
     settings,
 };
 
@@ -170,5 +170,24 @@ mod tests {
         let resp = test::call_service(&app, req).await;
 
         assert!(resp.status().is_server_error());
+    }
+
+    #[actix_web::test]
+    async fn test_user_is_cached() {
+        let app = test::init_service(App::new().service(register_user)).await;
+
+        let req = test::TestRequest::post()
+            .uri("/register_user")
+            .set_form(&RegisterUser {
+                email: String::from("some_email_2@email.com"),
+                password: "some_password".to_string(),
+                password_2: "some_password".to_string(),
+            })
+            .to_request();
+        let resp = test::call_service(&app, req).await;
+
+        let resp_body = test::read_body(resp).await;
+
+        assert!(resp_body.is_empty());
     }
 }
